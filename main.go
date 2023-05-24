@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 	"path/filepath"
+	"strconv"
 
 	types "github.com/secureworks/atomic-harness/pkg/types"
 )
@@ -241,7 +242,8 @@ func HandleEvent(evt *EventWrapper) {
 			IncludeEvent(evt.RawJsonStr, evt.EsProcessEventMsg.ToSimple())
 		}
 	case "windows_events":
-		if InSpecifiedTimeRangeSec(evt.WinEventMsg.UnixTime) {
+		intTime, _ := strconv.Atoi(evt.WinEventMsg.Columns.Time)
+		if InSpecifiedTimeRangeSec(int64(intTime)) {
 			if (evt.WinEventMsg.Columns.Eventid == "4688"){
 				IncludeEvent(evt.RawJsonStr, evt.WinEventMsg.ToSimple())
 			}

@@ -56,10 +56,11 @@ PATH=-"
 type WinEventColumns struct {
 	Eventid string       `json:"eventid"`
 	Data string 			   `json:"data"`
+	Time string					 `json:"time"`
 }
 
 type ProcessEventData struct {
-	ProcessEventData WinProcessData `json:"ProcessEventData"`
+	ProcessEventData WinProcessData `json:"EventData"`
 }
 
 type WinProcessData struct {
@@ -448,16 +449,20 @@ type EventWrapper struct {
 func (t *WinEvent) ToSimple() *types.SimpleEvent {
 	ret := &types.SimpleEvent{}
 	ret.EventType = types.SimpleSchemaProcess
-	ret.Timestamp = t.UnixTime
+	intTime, _ := strconv.Atoi(t.Columns.Time)
+	ret.Timestamp = int64(intTime)
 
 	fields := &types.SimpleProcessFields{}
 	data := &ProcessEventData{}
 	json.Unmarshal([]byte(t.Columns.Data), &data)
 	fields.Cmdline = data.ProcessEventData.CommandLine
 	fields.ExePath = data.ProcessEventData.ProcessName
-	fields.Pid, _ = strconv.ParseInt(string(data.ProcessEventData.NPid[2: len(data.ProcessEventData.NPid)]), 16, 64)
-	fields.ParentPid, _ = strconv.ParseInt(string(data.ProcessEventData.Pid[2: len(data.ProcessEventData.Pid)]),16, 64)
-
+	if len(data.ProcessEventData.NPid) > 2 {
+		fields.Pid, _ = strconv.ParseInt(string(data.ProcessEventData.NPid[2: len(data.ProcessEventData.NPid)]), 16, 64)
+	}
+	if len(data.ProcessEventData.Pid) > 2 {
+		fields.ParentPid, _ = strconv.ParseInt(string(data.ProcessEventData.Pid[2: len(data.ProcessEventData.Pid)]),16, 64)
+	}
 	ret.ProcessFields = fields
 	return ret
 }
